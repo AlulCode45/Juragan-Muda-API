@@ -124,9 +124,21 @@ const authLogout = async (req, res) => {
         })
 }
 
+const getUserByToken = async (token) => {
+    return await connectDb('users')
+        .where('remember_token', token)
+        .first('*')
+        .then((data) => {
+            return data
+        }).catch(() => {
+            return null
+        })
+}
+
 module.exports = {
     authLogin,
     authRegister,
     authRefreshToken,
-    authLogout
+    authLogout,
+    getUserByToken
 }
