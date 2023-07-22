@@ -5,7 +5,6 @@ const app = express()
 const authRoute = require('./routes/auth.route')
 const productRoute = require('./routes/product.route')
 const tokoRoute = require('./routes/toko.route')
-const ratingRoute = require('./routes/rating.route')
 const keranjangRoute = require('./routes/keranjang.route')
 //requirements
 const { checkConnectionDb } = require('./config/db.config')
@@ -26,8 +25,6 @@ app.use('/auth', authRoute)
 app.use('/product', productRoute)
 
 app.use('/toko', tokoRoute)
-
-app.use('/rating', ratingRoute)
 
 app.use('/keranjang', keranjangRoute)
 

@@ -38,7 +38,59 @@ const getTokoById = async (req, res) => {
 }
 const storeToko = async (req, res) => {
     const user = await getUserByToken(req?.headers?.authorization?.split(' ')[1])
+    const data = {
+        user_id: user?.id,
+        nama_toko: req?.body?.nama_toko,
+        deskripsi_toko: req?.body?.deskripsi_toko,
+        logo: req?.body?.logo,
+        alamat: req?.body?.alamat,
+        dusun: req?.body?.dusun,
+        desa: req?.body?.desa,
+        kecamatan: req?.body?.kecamatan,
+        kabupaten_kota: req?.body?.kabupaten_kota,
+        provinsi: req?.body?.provinsi,
+        kode_pos: req?.body?.kode_pos,
+        negara: req?.body?.negara,
+        rt: req?.body?.rt,
+        rw: req?.body?.rw,
+        created_at: req?.body?.created_at || new Date().toISOString(),
+        login_terakhir: req?.body?.login_terakhir || new Date().toISOString(),
+        jam_operasi: req?.body?.jam_operasi
+    }
 
+    if (user?.role === "penjual") {
+        await connectDb('toko')
+            .where('user_id', user?.id)
+            .then(async (toko) => {
+                if (toko.length > 0) {
+                    res.json({
+                        status: false,
+                        message: 'Anda sudah memiliki toko',
+                    })
+                } else {
+                    connectDb('toko')
+                        .insert(data)
+                        .then(() => {
+                            res.json({
+                                status: true,
+                                message: '',
+                                data: data
+                            })
+                        }).catch((err) => {
+                            res.json({
+                                status: false,
+                                message: 'Insert data failed',
+                                error: err
+                            })
+                        })
+                }
+            })
+    } else {
+        res.status(401).json({
+            status: false,
+            message: 'Unauthorized',
+        })
+    }
 }
 const deleteToko = async (req, res) => {
     const user = await getUserByToken(req?.headers?.authorization?.split(' ')[1])

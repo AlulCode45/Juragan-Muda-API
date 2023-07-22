@@ -28,7 +28,7 @@ const storeKeranjang = async (req, res) => {
         .insert({
             user_id: user?.id,
             produk_id: req?.body?.produk_id,
-            jumlah: req?.body?.produk_id,
+            jumlah: req?.body?.jumlah,
         }).then((out) => {
             if (out) {
                 res.json({
@@ -36,7 +36,7 @@ const storeKeranjang = async (req, res) => {
                     massage: "Store data success",
                     data: {
                         produk_id: req?.body?.produk_id,
-                        jumlah: req?.body?.produk_id,
+                        jumlah: req?.body?.jumlah,
                     },
                 });
             } else { throw new Error }

@@ -1,5 +1,5 @@
 const express = require('express')
-const { getAllProduct, getProductById, storeProduct, deleteProduct, uploadFotoProduct } = require("../controller/product.controller");
+const { getAllProduct, getProductById, storeProduct, deleteProduct, storeRating } = require("../controller/product.controller");
 const multer = require('multer');
 const path = require('path');
 const { checkRolePenjual } = require('../middleware/checkAuth.middleware');
@@ -22,10 +22,13 @@ const upload = multer({ storage: storage });
 
 productRoute.get('/', getAllProduct)
 productRoute.get('/:id', getProductById)
+productRoute.post('/rating', storeRating)
 
 productRoute.use(checkRolePenjual)
 productRoute.post('/', upload.array('foto_produk', 10), storeProduct)
 productRoute.delete('/:id', deleteProduct)
-productRoute.post('/upload-foto-product/:id', upload.array('foto_produk', 10), uploadFotoProduct)
+
+
+// productRoute.post('/upload-foto-product/:id', upload.array('foto_produk', 10), uploadFotoProduct)
 
 module.exports = productRoute

@@ -1,174 +1,225 @@
 const { connectDb } = require("../config/db.config");
 const { getUserByToken } = require("./auth.controller");
 const getAllProduct = async (req, res) => {
-    return await connectDb('produk')
+    await connectDb('produk')
         .leftJoin('foto_produk', 'foto_produk.produk_id', 'produk.id')
         .select('produk.*', 'foto_produk.foto_produk')
-        .then((out) => {
-            const products = {};
+        .then(async (out) => {
+            if (!out || out.length === 0) {
+                res.json({
+                    status: false,
+                    message: "Data not found"
+                });
+                return;
+            }
+            await connectDb('rating')
+                .where('produk_id', out[0]?.id)
+                .then((rating) => {
+                    if (!rating || rating.length === 0) {
+                        res.json({
+                            data: 0
+                        });
+                        return;
+                    }
+                    let totalRating = 0;
+                    rating.forEach(item => {
+                        totalRating += item?.rating;
+                    });
+                    const products = {}
+                    const rating_average = totalRating / rating.length;
+                    let bulatSatuDesimal = Math.round(rating_average * 10) / 10;
+                    let stringSatuDesimal = bulatSatuDesimal.toFixed(1);
 
-            out.forEach((row) => {
-                if (!products[row.id]) {
-                    // Jika produk belum ada dalam objek products, tambahkan
-                    products[row.id] = {
-                        id: row.id,
-                        toko_id: row.toko_id,
-                        nama_produk: row.nama_produk,
-                        deskripsi_produk: row.deskripsi_produk,
-                        harga_produk: row.harga_produk,
-                        created_at: row.created_at,
-                        updated_at: row.updated_at,
-                        foto_produk: [],
-                    };
-                }
+                    out.forEach((row) => {
+                        if (!products[row.id]) {
+                            products[row.id] = {
+                                id: row.id,
+                                toko_id: row.toko_id,
+                                nama_produk: row.nama_produk,
+                                deskripsi_produk: row.deskripsi_produk,
+                                harga_produk: row.harga_produk,
+                                created_at: row.created_at,
+                                updated_at: row.updated_at,
+                                rating: stringSatuDesimal,
+                                foto_produk: [],
+                            };
+                        }
 
-                if (row.foto_produk) {
-                    // Jika foto_produk tidak null, tambahkan URL foto ke array foto_produk produk yang sesuai
-                    products[row.id].foto_produk.push(row.foto_produk);
-                }
-            });
+                        if (row.foto_produk) {
+                            products[row.id].foto_produk.push(row.foto_produk);
+                        }
+                    });
+                    const productList = Object.values(products);
 
-            // Konversi objek products menjadi array
-            const productList = Object.values(products);
+                    res.json({
+                        status: true,
+                        massage: "Get data success",
+                        data: productList,
+                    });
 
-            res.json({
-                status: true,
-                massage: "Get data success",
-                data: productList,
-            });
-        }).catch((err) => {
+                })
+                .catch((error) => {
+                    res.json({
+                        status: false,
+                        message: "Get rating data failed",
+                        error: error
+                    });
+                });
+        })
+        .catch((err) => {
             res.json({
                 status: false,
-                massage: "Get data failed",
+                message: "Get data failed",
                 error: err
-            })
-        })
+            });
+        });
 }
 const getProductById = async (req, res) => {
-
-    return await connectDb('produk')
+    await connectDb('produk')
         .leftJoin('foto_produk', 'foto_produk.produk_id', 'produk.id')
         .select('produk.*', 'foto_produk.foto_produk')
         .where('produk.id', req?.params?.id)
-        .then((out) => {
-            const products = {};
+        .then(async (out) => {
+            if (!out || out.length === 0) {
+                res.json({
+                    status: false,
+                    message: "Data not found"
+                });
+                return;
+            }
+            await connectDb('rating')
+                .where('produk_id', out[0]?.id)
+                .then((rating) => {
+                    if (!rating || rating.length === 0) {
+                        res.json({
+                            data: 0
+                        });
+                        return;
+                    }
+                    let totalRating = 0;
+                    rating.forEach(item => {
+                        totalRating += item?.rating;
+                    });
+                    const products = {}
+                    const rating_average = totalRating / rating.length;
+                    let bulatSatuDesimal = Math.round(rating_average * 10) / 10;
+                    let stringSatuDesimal = bulatSatuDesimal.toFixed(1);
 
-            out.forEach((row) => {
-                if (!products[row.id]) {
-                    // Jika produk belum ada dalam objek products, tambahkan
-                    products[row.id] = {
-                        id: row.id,
-                        toko_id: row.toko_id,
-                        nama_produk: row.nama_produk,
-                        deskripsi_produk: row.deskripsi_produk,
-                        harga_produk: row.harga_produk,
-                        created_at: row.created_at,
-                        updated_at: row.updated_at,
-                        foto_produk: [],
-                    };
-                }
+                    out.forEach((row) => {
+                        if (!products[row.id]) {
+                            products[row.id] = {
+                                id: row.id,
+                                toko_id: row.toko_id,
+                                nama_produk: row.nama_produk,
+                                deskripsi_produk: row.deskripsi_produk,
+                                harga_produk: row.harga_produk,
+                                created_at: row.created_at,
+                                updated_at: row.updated_at,
+                                rating: stringSatuDesimal,
+                                foto_produk: [],
+                            };
+                        }
 
-                if (row.foto_produk) {
-                    // Jika foto_produk tidak null, tambahkan URL foto ke array foto_produk produk yang sesuai
-                    products[row.id].foto_produk.push(row.foto_produk);
-                }
-            });
+                        if (row.foto_produk) {
+                            products[row.id].foto_produk.push(row.foto_produk);
+                        }
+                    });
+                    const productList = Object.values(products);
 
-            // Konversi objek products menjadi array
-            const productList = Object.values(products);
+                    res.json({
+                        status: true,
+                        massage: "Get data success",
+                        data: productList,
+                    });
 
-            res.json({
-                status: true,
-                massage: "Get data success",
-                data: productList,
-            });
-        }).catch((err) => {
+                })
+                .catch((error) => {
+                    res.json({
+                        status: false,
+                        message: "Get rating data failed",
+                        error: error
+                    });
+                });
+        })
+        .catch((err) => {
             res.json({
                 status: false,
-                massage: "Get data failed",
+                message: "Get data failed",
                 error: err
-            })
-        })
-}
+            });
+        });
+};
+
+
 const storeProduct = async (req, res) => {
     const user = await getUserByToken(req?.headers?.authorization?.split(' ')[1])
     const uploadFoto = req?.files
-    const toko = async () => {
-        return await connectDb('toko')
-            .where('user_id', user?.id)
-            .first('*')
-            .then((out) => {
-                return out
-            }).catch(() => {
-                return null
-            })
-    }
 
-    return await connectDb('produk')
-        .insert({
-            toko: toko?.id,
-            nama_produk: req?.body?.nama_produk,
-            deskripsi_produk: req?.body?.deskripsi_produk,
-            harga_produk: req?.body?.harga_produk
-        })
-        .then((data) => {
-            connectDb.transaction(function (db) {
-
-                uploadFoto.map((foto) => {
-                    foto.product_id = data[0]
-                    foto.foto_produk = `${process.env.SERVER_HOST}/uploads/foto_produk/${foto?.filename}`
+    await connectDb('toko')
+        .where('user_id', user?.id)
+        .first('*')
+        .then(async (toko) => {
+            if (toko.length === 0) {
+                res.status('404').json({
+                    status: false,
+                    massage: 'Anda tidak memiliki toko'
                 })
-                const fotoProduk = [];
-
-                for (const obj of uploadFoto) {
-                    const { product_id, foto_produk } = obj;
-                    fotoProduk.push({ product_id, foto_produk });
-                }
-
-                connectDb('foto_produk').transacting(db)
-                    .insert(fotoProduk)
-                    .then(db.commit)
-                    .catch(db.rollback)
-            })
-                .then(() => {
-
+            }
+            await connectDb('produk')
+                .insert({
+                    toko_id: toko?.id,
+                    nama_produk: req?.body?.nama_produk,
+                    deskripsi_produk: req?.body?.deskripsi_produk,
+                    harga_produk: req?.body?.harga_produk,
+                    jumlah_terjual: 0
+                }).then(async (produk) => {
                     uploadFoto.map((foto) => {
+                        foto.produk_id = produk[0]
                         foto.foto_produk = `${process.env.SERVER_HOST}/uploads/foto_produk/${foto?.filename}`
                     })
                     const fotoProduk = [];
 
                     for (const obj of uploadFoto) {
-                        const { foto_produk } = obj;
-                        fotoProduk.push({ foto_produk });
+                        const { produk_id, foto_produk } = obj;
+                        fotoProduk.push({ produk_id, foto_produk });
                     }
 
-                    res.json({
-                        status: true,
-                        massage: "Insert data success",
-                        data: {
-                            toko_id: toko?.id,
-                            nama_produk: req?.body?.nama_produk,
-                            deskripsi_produk: req?.body?.deskripsi_produk,
-                            harga_produk: req?.body?.harga_produk,
-                            foto_produk: fotoProduk
-                        }
-                    })
-                }).catch(() => {
+                    await connectDb('foto_produk')
+                        .insert(fotoProduk)
+                        .then(() => {
+                            res.json({
+                                status: true,
+                                massage: "Insert data success",
+                                data: {
+                                    toko_id: toko?.id,
+                                    nama_produk: req?.body?.nama_produk,
+                                    deskripsi_produk: req?.body?.deskripsi_produk,
+                                    harga_produk: req?.body?.harga_produk,
+                                    foto_produk: fotoProduk
+                                }
+                            })
+                        }).catch((err) => {
+                            res.json({
+                                status: false,
+                                message: 'Insert data failed',
+                                error: err
+                            })
+                        })
+
+                }).catch((err) => {
                     res.json({
                         status: false,
-                        massage: "Insert data failed",
+                        message: 'Insert data failed',
+                        error: err
                     })
                 })
-
-        }).catch((err) => {
-            res.json({
-                status: false,
-                massage: "Insert data failed",
-                error: err
-            })
+        }).catch(() => {
+            return null
         })
+
 }
 const deleteProduct = async (req, res) => {
+    //TODO: Menambahkan validasi check user
     return await connectDb('produk')
         .where('id', req?.params?.id)
         .del()
@@ -185,6 +236,46 @@ const deleteProduct = async (req, res) => {
             })
         })
 }
+
+const storeRating = async (req, res) => {
+    const user = await getUserByToken(req?.headers?.authorization?.split(' ')[1])
+    return await connectDb('rating')
+        .where({
+            user_id: user?.id,
+            produk_id: req?.body?.produk_id
+        })
+        .then(async (out) => {
+            if (out.length < 1) {
+                return await connectDb('rating')
+                    .insert({
+                        produk_id: req?.body?.produk_id,
+                        user_id: user?.id,
+                        rating: req?.body?.rating
+                    }).then(() => {
+                        res.json({
+                            status: true,
+                            massage: 'Store data success',
+                            data: {
+                                produk_id: req?.body?.produk_id,
+                                rating: req?.body?.rating
+                            },
+                        })
+                    }).catch(() => { throw new Error })
+            } else {
+                res.json({
+                    status: false,
+                    massage: 'Sudah rating sebelumnya'
+                })
+            }
+        }).catch((err) => {
+            res.json({
+                status: false,
+                massage: 'Store data failed',
+                error: err,
+            })
+        })
+}
+
 const uploadFotoProduct = async (req, res) => {
     res.json({
         file: req?.file
@@ -196,5 +287,6 @@ module.exports = {
     getProductById,
     storeProduct,
     deleteProduct,
+    storeRating,
     uploadFotoProduct
 }

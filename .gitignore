@@ -1,4 +1,4 @@
 node_modules
-public/foto_produk/
-public/foto_profile/
-public/foto_toko/
+/public/uploads/foto_produk
+/public/uploads/foto_profile
+/public/uploads/foto_toko
