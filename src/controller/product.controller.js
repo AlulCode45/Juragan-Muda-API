@@ -1,79 +1,85 @@
 const { connectDb } = require("../config/db.config");
 const { getUserByToken } = require("./auth.controller");
-const getAllProduct = async (req, res) => {
-    await connectDb('produk')
+
+const getAllProduct = (req, res) => {
+    connectDb('produk')
         .leftJoin('foto_produk', 'foto_produk.produk_id', 'produk.id')
         .select('produk.*', 'foto_produk.foto_produk')
-        .then(async (out) => {
+        .then((out) => {
             if (!out || out.length === 0) {
                 res.json({
                     status: false,
-                    message: "Data not found"
+                    message: "Data tidak ditemukan"
                 });
                 return;
             }
-            await connectDb('rating')
-                .where('produk_id', out[0]?.id)
-                .then((rating) => {
-                    if (!rating || rating.length === 0) {
-                        res.json({
-                            data: 0
-                        });
-                        return;
-                    }
-                    let totalRating = 0;
-                    rating.forEach(item => {
-                        totalRating += item?.rating;
-                    });
-                    const products = {}
-                    const rating_average = totalRating / rating.length;
-                    let bulatSatuDesimal = Math.round(rating_average * 10) / 10;
-                    let stringSatuDesimal = bulatSatuDesimal.toFixed(1);
 
-                    out.forEach((row) => {
-                        if (!products[row.id]) {
-                            products[row.id] = {
-                                id: row.id,
-                                toko_id: row.toko_id,
-                                nama_produk: row.nama_produk,
-                                deskripsi_produk: row.deskripsi_produk,
-                                harga_produk: row.harga_produk,
-                                created_at: row.created_at,
-                                updated_at: row.updated_at,
+            const products = {};
+
+            const ratingPromises = out.map((data) => {
+                return connectDb('rating')
+                    .where('produk_id', data?.id)
+                    .then((rating) => {
+                        let totalRating = 0;
+                        rating.forEach(item => {
+                            totalRating += item?.rating;
+                        });
+                        const rating_average = totalRating / rating.length;
+                        let bulatSatuDesimal = Math.round(rating_average * 10) / 10;
+                        let stringSatuDesimal = bulatSatuDesimal.toFixed(1);
+
+                        if (!products[data.id]) {
+                            products[data.id] = {
+                                id: data.id,
+                                toko_id: data.toko_id,
+                                nama_produk: data.nama_produk,
+                                deskripsi_produk: data.deskripsi_produk,
+                                harga_produk: data.harga_produk,
+                                created_at: data.created_at,
+                                updated_at: data.updated_at,
                                 rating: stringSatuDesimal,
+                                jumlah_terjual: data?.jumlah_terjual,
                                 foto_produk: [],
                             };
                         }
 
-                        if (row.foto_produk) {
-                            products[row.id].foto_produk.push(row.foto_produk);
+                        if (data.foto_produk) {
+                            products[data.id].foto_produk.push(data.foto_produk);
                         }
+                    })
+                    .catch(() => {
+                        products[0] = null
                     });
+            });
+
+            Promise.all(ratingPromises)
+                .then(() => {
                     const productList = Object.values(products);
 
                     res.json({
                         status: true,
-                        massage: "Get data success",
+                        message: "Berhasil mendapatkan data",
                         data: productList,
                     });
-
                 })
-                .catch((error) => {
+                .catch((err) => {
                     res.json({
                         status: false,
-                        message: "Get rating data failed",
-                        error: error
+                        message: "Gagal mendapatkan data",
+                        error: err
                     });
                 });
         })
         .catch((err) => {
             res.json({
                 status: false,
-                message: "Get data failed",
+                message: "Gagal mendapatkan data",
                 error: err
             });
         });
-}
+};
+
+
 const getProductById = async (req, res) => {
     await connectDb('produk')
         .leftJoin('foto_produk', 'foto_produk.produk_id', 'produk.id')
@@ -116,6 +122,7 @@ const getProductById = async (req, res) => {
                                 created_at: row.created_at,
                                 updated_at: row.updated_at,
                                 rating: stringSatuDesimal,
+                                jumlah_terjual: row?.jumlah_terjual,
                                 foto_produk: [],
                             };
                         }
